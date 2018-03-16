@@ -1,0 +1,22 @@
+{
+  "header":
+  {
+    "namespace": [ "mesh", "config" ],
+    "author": { "name": "Xavier R. Guerin", "email": "xavier.guerin@ibm.com" },
+    "version": "1.0",
+    "doc": "Endpoint model"
+  },
+  "body":
+  {
+    "clients":
+    {
+      "kind": "integer", "arity": "1", "range": "[0,100)",
+      "doc": "Required incoming connections"
+    },
+    "port":
+    {
+      "kind": "integer", "arity": "1", "range": "[10000,65536)",
+      "doc": "Endpoint TCP port"
+    }
+  }
+}

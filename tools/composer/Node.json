@@ -1,0 +1,21 @@
+{
+  "header":
+  {
+    "author": { "name": "Xavier R. Guerin", "email": "xavier.guerin@ibm.com" },
+    "version": "1.0",
+    "doc": "Node model"
+  },
+  "body":
+  {
+    "hostname":
+    {
+      "kind": "string", "arity": "1",
+      "doc": "Connection host name"
+    },
+    "port":
+    {
+      "kind": "integer", "arity": "1", "range": "[10000,65536)",
+      "doc": "Connection TCP port"
+    }
+  }
+}

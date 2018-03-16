@@ -1,0 +1,16 @@
+{
+  "endpoint": {
+    "clients": 0,
+    "port": 11234
+  },
+  "connections": [
+    {
+      "hostname": "localhost",
+      "port" : 11233
+    },
+    {
+      "hostname": "localhost",
+      "port" : 11233
+    }
+  ]
+}

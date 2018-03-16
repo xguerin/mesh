@@ -1,0 +1,31 @@
+{
+  "header":
+  {
+    "author": { "name": "Xavier R. Guerin", "email": "xavier.guerin@ibm.com" },
+    "version": "1.0",
+    "doc": "Mesh application model"
+  },
+  "templates": {
+    "node":
+    {
+      "kind": "class", "model": "Node.json", "arity": "1",
+      "doc": "Node definition"
+    },
+    "connection": {
+      "kind": "string", "arity": "*", "doc": "Connection name"
+    }
+  },
+  "body":
+  {
+    "nodes":
+    {
+      "kind": "select", "template": "node", "arity": "1",
+      "size": "+", "doc": "Nodes"
+    },
+    "connections":
+    {
+      "kind": "select", "template": "connection", "arity": "1",
+      "size": "+", "hook": "@.nodes:(.*):\\1", "doc": "Mesh"
+    }
+  }
+}

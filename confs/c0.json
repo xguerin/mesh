@@ -1,0 +1,8 @@
+{
+  "endpoint": {
+    "clients": 2,
+    "port": 11233
+  },
+  "connections": [
+  ]
+}
