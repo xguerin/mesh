@@ -6,5 +6,14 @@
   "src/*.h": {
     "alternate": "src/{}.cpp",
     "type": "header"
+  },
+  "lib/*.cpp": {
+    "alternate": "lib/{}.h",
+    "type": "source"
+  },
+  "lib/*.h": {
+    "alternate": "lib/{}.cpp",
+    "type": "header"
   }
+
 }

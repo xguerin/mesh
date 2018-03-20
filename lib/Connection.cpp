@@ -1,6 +1,7 @@
 #include "Connection.h"
 #include <cerrno>
 #include <ace/common/Log.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@ Connection::Connection(config::IConnection const & cfg)
   addr.sin_family = AF_INET;
   addr.sin_port = htons(cfg.port());
   bcopy(hosts->h_addr, &addr.sin_addr.s_addr, hosts->h_length);
+  ACE_LOG(Info, "Connecting to ", cfg.hostname(), " = ", inet_ntoa(addr.sin_addr));
   //
   // Connect to the remove server.
   //

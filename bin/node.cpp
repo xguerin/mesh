@@ -1,5 +1,6 @@
 #include <Connection.h>
 #include <Endpoint.h>
+#include <Status.h>
 #include <Mesh.ac.h>
 #include <list>
 #include <string>
@@ -26,6 +27,10 @@ main(int argc, char *argv[])
    */
   auto cfg = parseFile<mesh::config::Mesh>(cfgA.getValue(), false, argc, argv);
   if (cfg == nullptr) return __LINE__;
+  /*
+   * Create the status file.
+   */
+  mesh::Status status("/tmp/node");
   /*
    * Create the endpoint.
    */
@@ -57,5 +62,9 @@ main(int argc, char *argv[])
       connections.push_back(v);
     }
   }
+  /*
+   * Create the status file and return.
+   */
+  status.mark();
   return 0;
 }

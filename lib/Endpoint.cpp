@@ -20,26 +20,26 @@ Endpoint::Endpoint(config::IEndpoint const & cfg)
   , m_countdown(cfg.clients())
 {
   struct sockaddr_in address;
-  //
-  // Create the server socket.
-  //
+  /*
+   * Create the server socket.
+   */
   if ((m_fd = socket(PF_INET, SOCK_STREAM, 0)) == 0) {
     throw std::runtime_error(strerror(errno));
   }
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(cfg.port());
-  //
-  // Force port reuse.
-  //
+  /*
+   * Force port reuse.
+   */
   int flag = 1;
   if (setsockopt(m_fd, SOL_SOCKET, SO_REUSEPORT, &flag, sizeof(flag)) == -1) {
     ACE_LOG(Error, strerror(errno));
     throw std::runtime_error(strerror(errno));
   }
-  //
-  // Bind the socket.
-  //
+  /*
+   * Bind the socket.
+   */
   if (bind(m_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
     ACE_LOG(Error, strerror(errno));
     throw std::runtime_error(strerror(errno));
@@ -48,28 +48,28 @@ Endpoint::Endpoint(config::IEndpoint const & cfg)
     ACE_LOG(Error, strerror(errno));
     throw std::runtime_error(strerror(errno));
   }
-  //
-  // Create the runner thread.
-  ///
+  /*
+   * Create the runner thread.
+   */
   m_thread = std::thread(&Endpoint::run, this);
   ACE_LOG(Info, "Endpoint created, listening on port: ", cfg.port());
 }
 
 Endpoint::~Endpoint()
 {
-  //
-  // Shutdown the receiver thread
-  //
+  /*
+   * Shutdown the receiver thread
+   */
   m_thread.join();
-  //
-  // Close the clients.
-  //
+  /*
+   * Close the clients.
+   */
   for (auto const & c : m_clients) {
     ::close(c);
   }
-  //
-  // Close the server socket.
-  //
+  /*
+   * Close the server socket.
+   */
   ::close(m_fd);
   ACE_LOG(Info, "Endpoint destructed");
 }
