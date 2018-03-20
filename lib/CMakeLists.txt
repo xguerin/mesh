@@ -23,6 +23,6 @@ add_custom_command(
   VERBATIM
   )
 
-add_executable(composer ${SOURCES} ${MODEL_AC_CPP})
-target_compile_features(composer PRIVATE cxx_nullptr)
-target_link_libraries(composer PUBLIC ${ACE_LIBRARIES})
+add_library(mesh ${SOURCES} ${MODEL_AC_CPP})
+target_compile_features(mesh PRIVATE cxx_nullptr)
+target_link_libraries(mesh PUBLIC ${ACE_LIBRARIES})

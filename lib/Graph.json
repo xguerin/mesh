@@ -1,6 +1,7 @@
 {
   "header":
   {
+    "namespace": [ "mesh", "config" ],
     "author": { "name": "Xavier R. Guerin", "email": "xavier.guerin@ibm.com" },
     "version": "1.0",
     "doc": "Mesh application model"

@@ -75,4 +75,5 @@ include_directories(${ACE_INCLUDE_DIRS})
 # Subdirectories
 #
 
-add_subdirectory(tools)
+add_subdirectory(bin)
+add_subdirectory(lib)
