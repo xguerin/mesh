@@ -8,10 +8,12 @@ spec:
       - name: node
         image: xguerin/mesh-ubuntu:latest
         imagePullPolicy: IfNotPresent
-        command: ["node", "-c"]
+        command: ["node", "-b", "$(MESH_BACKOFF)", "-c"]
         env:
           - name: ACE_LOG_LEVEL
-            value: INFO
+            value: ERROR
+          - name: MESH_BACKOFF
+            value: 100000
         ports:
           - name: endpoint
         volumeMounts:

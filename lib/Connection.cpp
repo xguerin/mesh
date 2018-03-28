@@ -19,7 +19,7 @@ Connection::Connection(config::IConnection const & cfg)
   // Create the client socket.
   //
   if ((m_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    ACE_LOG(Error, strerror(errno));
+    ACE_LOG(Debug, strerror(errno));
     throw std::runtime_error(strerror(errno));
   }
   //
@@ -28,7 +28,7 @@ Connection::Connection(config::IConnection const & cfg)
   struct hostent * hosts;
   hosts = gethostbyname(cfg.hostname().c_str());
   if (hosts == nullptr) {
-    ACE_LOG(Error, strerror(errno));
+    ACE_LOG(Debug, strerror(errno));
     throw std::runtime_error(strerror(errno));
   }
   //
@@ -44,7 +44,7 @@ Connection::Connection(config::IConnection const & cfg)
   // Connect to the remove server.
   //
   if (connect(m_fd, (struct sockaddr *)&addr, sizeof(sockaddr_in)) < 0) {
-    ACE_LOG(Error, strerror(errno));
+    ACE_LOG(Debug, strerror(errno));
     throw std::runtime_error(strerror(errno));
   }
 }

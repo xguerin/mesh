@@ -1,4 +1,5 @@
 #include "Kubernetes.h"
+#include <cassert>
 #include <ace/common/Log.h>
 #include <ace/engine/Master.h>
 #include <ace/tree/Array.h>
@@ -43,12 +44,24 @@ buildJob(std::string const & name, int port, Value::Ref const & job,
   Path pName = Path::parse("$.metadata.name");
   Path pComd = Path::parse("$.spec.template.spec.containers[0].command");
   Path pPort = Path::parse("$.spec.template.spec.containers[0].ports[0].containerPort");
+  Path pParm = Path::parse("$.spec.template.spec.containers[0].env[1].value");
   /*
    * Fill the values.
    */
   root->put(pName, Primitive::build("name", name));
   root->put(pComd, Primitive::build("/data/" + name + ".json"));
   root->put(pPort, Primitive::build("containerPort", port));
+  /*
+   * NOTE There is a bug in yaml-cpp that treats quoted integer as integers.
+   * We need to fix that here.
+   */
+  std::vector<Value::Ref> lasso;
+  root->get(pParm, lasso);
+  assert(lasso.size() == 1);
+  auto const & prim = static_cast<Primitive const &>(*lasso[0]);
+  auto as_string = Primitive::build(std::to_string(prim.value<int>()));
+  root->put(pParm, nullptr);
+  root->put(pParm, as_string);
   /*
    * Return the object.
    */
