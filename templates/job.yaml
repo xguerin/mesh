@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata: { }
+spec:
+  template:
+    spec:
+      containers:
+      - name: node
+        image: xguerin/mesh-ubuntu:latest
+        imagePullPolicy: IfNotPresent
+        command: ["node", "-c"]
+        env:
+          - name: ACE_LOG_LEVEL
+            value: INFO
+        ports:
+          - name: endpoint
+        volumeMounts:
+        - mountPath: /data
+          name: data-volume
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /tmp/node
+          initialDelaySeconds: 1
+          periodSeconds: 1
+      restartPolicy: Never
+      volumes:
+        - name: data-volume
+          hostPath:
+            path: /k8s
+            type: Directory
+  backoffLimit: 1

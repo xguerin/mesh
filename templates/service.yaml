@@ -1,0 +1,9 @@
+kind: Service
+apiVersion: v1
+metadata: { }
+spec:
+  selector: { }
+  ports:
+  - protocol: TCP
+    targetPort: endpoint
+  clusterIP: None

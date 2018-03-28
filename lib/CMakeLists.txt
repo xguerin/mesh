@@ -19,7 +19,7 @@ add_custom_command(
   DEPENDS ${MODELS}
   OUTPUT  ${MODEL_AC_H} ${MODEL_AC_CPP}
   COMMAND ${CMAKE_COMMAND} -E env ace-compile -I ${CMAKE_CURRENT_SOURCE_DIR} ${MODELS}
-  COMMENT "Compiling test models"
+  COMMENT "Compiling ACE models"
   VERBATIM
   )
 
