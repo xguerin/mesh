@@ -67,5 +67,9 @@ main(int argc, char *argv[])
    * Create the status file and return.
    */
   status.mark();
+  /*
+   * Sleep some delay before quitting.
+   */
+  sleep(60);
   return 0;
 }
