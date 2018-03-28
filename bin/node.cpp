@@ -20,6 +20,7 @@ main(int argc, char *argv[])
    * Define CLI arguments
    */
   TCLAP::CmdLine cmd("Node", ' ', MESH_VERSION);
+  VA<int>         bckA("b", "backoff", "Back-off delay (us)", false, 1000000, "uS", cmd);
   VA<std::string> cfgA("c", "config", "Configuration file", true, "", "CONFIG", cmd);
   cmd.parse(argc, argv);
   /*
@@ -54,7 +55,7 @@ main(int argc, char *argv[])
       }
       catch (std::runtime_error const &) {
         ACE_LOG(Info, "Connection refused, retrying in 1 second");
-        sleep(1);
+        usleep(bckA.getValue());
       }
       /*
        * Queue that connection.
