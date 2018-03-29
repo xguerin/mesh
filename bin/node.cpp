@@ -7,11 +7,20 @@
 #include <ace/engine/Master.h>
 #include <ace/model/Helper.h>
 #include <tclap/CmdLine.h>
+#include <signal.h>
 #include <unistd.h>
 
 using namespace ace::model::Helper;
 
 template<class T> using VA = TCLAP::ValueArg<T>;
+
+static bool terminated = false;
+
+void
+signal_handler(int signum)
+{
+  terminated = true;
+}
 
 int
 main(int argc, char *argv[])
@@ -32,6 +41,10 @@ main(int argc, char *argv[])
    * Create the status file.
    */
   mesh::Status status("/tmp/node");
+  /*
+   * Register the TERM signal.
+   */
+  signal(SIGTERM, signal_handler);
   /*
    * Create the endpoint.
    */
@@ -68,8 +81,10 @@ main(int argc, char *argv[])
    */
   status.mark();
   /*
-   * Sleep some delay before quitting.
+   * Wait for the termination signal.
    */
-  sleep(60);
+  while (!terminated) {
+    usleep(100000);
+  }
   return 0;
 }
