@@ -1,18 +1,17 @@
 #pragma once
 
-#include "IEndpoint.ac.h"
 #include <atomic>
 #include <thread>
 #include <vector>
 
 namespace mesh {
 
-class Endpoint
+class Monitor
 {
  public:
 
-  Endpoint(config::IEndpoint const & cfg);
-  ~Endpoint();
+  Monitor(const int ms);
+  ~Monitor();
 
  private:
 
@@ -21,8 +20,6 @@ class Endpoint
   int               m_fd;
   std::atomic<bool> m_shutdown;
   std::thread       m_thread;
-  std::vector<int>  m_clients;
-  size_t            m_countdown;
 };
 
 }

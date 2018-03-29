@@ -54,4 +54,10 @@ Connection::~Connection()
   ::close(m_fd);
 }
 
+void
+Connection::write(const size_t n, const void * const data)
+{
+  ::write(m_fd, data, n);
+}
+
 }

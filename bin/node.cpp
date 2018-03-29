@@ -31,6 +31,7 @@ main(int argc, char *argv[])
   TCLAP::CmdLine cmd("Node", ' ', MESH_VERSION);
   VA<int>         bckA("b", "backoff", "Back-off delay (us)", false, 1000000, "uS", cmd);
   VA<std::string> cfgA("c", "config", "Configuration file", true, "", "CONFIG", cmd);
+  VA<size_t>      pldA("p", "payload", "Payload size", false, 128, "SIZE", cmd);
   cmd.parse(argc, argv);
   /*
    * Instantiate the configuration
@@ -83,8 +84,11 @@ main(int argc, char *argv[])
   /*
    * Wait for the termination signal.
    */
+  uint8_t garbage[pldA.getValue()];
   while (!terminated) {
-    usleep(100000);
+    for (auto & c: connections) {
+      c->write(pldA.getValue(), garbage);
+    }
   }
   return 0;
 }

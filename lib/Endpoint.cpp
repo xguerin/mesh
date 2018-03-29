@@ -3,11 +3,11 @@
 #include <exception>
 #include <ace/common/Log.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 
 namespace mesh {
@@ -74,37 +74,61 @@ Endpoint::~Endpoint()
   ACE_LOG(Info, "Endpoint destructed");
 }
 
+#define BUFFER_SIZE 16384
+
 void
 Endpoint::run()
 {
   struct sockaddr_in address;
   int addrlen = sizeof(address);
+  uint8_t * buffer = new uint8_t[BUFFER_SIZE];
+  //
+  // Prepare the poll descriptors.
+  //
+  struct pollfd fds[1 + m_clients.size()];
+  memset(fds, 0, sizeof(fds));
+  fds[0].fd = m_fd;
+  fds[0].events = POLLIN;
+  for (size_t i = 0; i < m_clients.size(); i += 1) {
+    fds[i + 1].fd = m_clients[i];
+    fds[i + 1].events = POLLIN;
+  }
   //
   // Runner loop.
   //
   ACE_LOG(Info, "Endpoint runner started");
   while (!m_shutdown && m_countdown > 0) {
-    struct timeval timeout = { 0, 100000 };
-    //
-    // Declare the FD set.
-    //
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(m_fd, &fds);
     //
     // Wait for a connection.
     //
-    int res = select(m_fd + 1, &fds, nullptr, nullptr, &timeout);
-    if (res == 1) {
+    int res = poll(fds, 1 + m_clients.size(), 100);
+    if (res <= 0) {
+      continue;
+    }
+    //
+    // Process the server socket.
+    //
+    if (fds[0].revents | POLLIN) {
       ACE_LOG(Info, "Accepting new client connection");
       int fd = accept(m_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
       if (fd >= 0) {
         m_clients.push_back(fd);
         m_countdown -= 1;
       }
+      fds[0].revents = 0;
+    }
+    //
+    // Process the client sockets.
+    //
+    for (size_t i = 0; i < m_clients.size(); i += 1) {
+      if (fds[i + 1].revents | POLLIN) {
+        read(fds[i + 1].fd, buffer, BUFFER_SIZE);
+        fds[0].revents = 0;
+      }
     }
   }
   ACE_LOG(Info, "Endpoint runner ended");
+  delete[] buffer;
 }
 
 }
