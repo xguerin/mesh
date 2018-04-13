@@ -22,7 +22,6 @@ class Endpoint
   std::atomic<bool> m_shutdown;
   std::thread       m_thread;
   std::vector<int>  m_clients;
-  size_t            m_countdown;
 };
 
 }

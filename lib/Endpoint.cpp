@@ -2,6 +2,7 @@
 #include <cerrno>
 #include <exception>
 #include <ace/common/Log.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <poll.h>
 #include <stdio.h>
@@ -17,7 +18,6 @@ Endpoint::Endpoint(config::IEndpoint const & cfg)
   , m_shutdown(false)
   , m_thread()
   , m_clients()
-  , m_countdown(cfg.clients())
 {
   struct sockaddr_in address;
   /*
@@ -60,6 +60,7 @@ Endpoint::~Endpoint()
   /*
    * Shutdown the receiver thread
    */
+  m_shutdown = true;
   m_thread.join();
   /*
    * Close the clients.
@@ -87,17 +88,20 @@ Endpoint::run()
   //
   struct pollfd fds[1 + m_clients.size()];
   memset(fds, 0, sizeof(fds));
-  fds[0].fd = m_fd;
-  fds[0].events = POLLIN;
-  for (size_t i = 0; i < m_clients.size(); i += 1) {
-    fds[i + 1].fd = m_clients[i];
-    fds[i + 1].events = POLLIN;
-  }
   //
   // Runner loop.
   //
   ACE_LOG(Info, "Endpoint runner started");
-  while (!m_shutdown && m_countdown > 0) {
+  while (!m_shutdown) {
+    //
+    // Reset the poll descriptors.
+    //
+    fds[0].fd = m_fd;
+    fds[0].events = POLLIN;
+    for (size_t i = 0; i < m_clients.size(); i += 1) {
+      fds[i + 1].fd = m_clients[i];
+      fds[i + 1].events = POLLIN;
+    }
     //
     // Wait for a connection.
     //
@@ -108,22 +112,20 @@ Endpoint::run()
     //
     // Process the server socket.
     //
-    if (fds[0].revents | POLLIN) {
+    if (fds[0].revents & POLLIN) {
       ACE_LOG(Info, "Accepting new client connection");
       int fd = accept(m_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
       if (fd >= 0) {
+        fcntl(fd, O_NONBLOCK);
         m_clients.push_back(fd);
-        m_countdown -= 1;
       }
-      fds[0].revents = 0;
     }
     //
     // Process the client sockets.
     //
     for (size_t i = 0; i < m_clients.size(); i += 1) {
-      if (fds[i + 1].revents | POLLIN) {
+      if (fds[i + 1].revents & POLLIN) {
         read(fds[i + 1].fd, buffer, BUFFER_SIZE);
-        fds[0].revents = 0;
       }
     }
   }

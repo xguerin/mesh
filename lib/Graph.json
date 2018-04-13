@@ -13,7 +13,8 @@
       "doc": "Node definition"
     },
     "connection": {
-      "kind": "string", "arity": "*", "doc": "Connection name"
+      "kind": "string", "arity": "*", "doc": "Connection name",
+      "hook": { "path": "@.nodes", "from": "(.*)", "to": "\\1" }
     }
   },
   "body":
@@ -25,8 +26,8 @@
     },
     "connections":
     {
-      "kind": "select", "template": "connection", "arity": "1",
-      "size": "+", "hook": "@.nodes:(.*):\\1", "doc": "Mesh"
+      "kind": "select", "template": "connection", "arity": "1", "doc": "Mesh",
+      "hook": { "path": "@.nodes", "from": "(.*)", "to": "\\1", "exact": true }
     }
   }
 }
