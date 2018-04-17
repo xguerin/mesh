@@ -99,8 +99,9 @@ main(int argc, char *argv[])
       for (auto & c: connections) {
         ssize_t res = c->write(pldA.getValue(), garbage);
         if (res < 0) {
-          ACE_LOG(Error, "At least one connection lost, aborting");
-          return __LINE__;
+          ACE_LOG(Error, "At least one connection lost, terminating");
+          terminated = true;
+          break;
         }
       }
     }
