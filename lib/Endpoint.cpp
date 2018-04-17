@@ -157,7 +157,8 @@ Endpoint::run()
      */
     if (fds[1].revents & POLLIN) {
       uint64_t value;
-      read(m_timerfd, &value, sizeof(value));
+      ssize_t ret = read(m_timerfd, &value, sizeof(value));
+      if (ret <= 0) continue;
       delta = (counter - last) / m_sec;
       data.push_back(delta);
       ACE_LOG(Debug, header, delta);

@@ -60,7 +60,8 @@ Monitor::run()
     //
     if (res == 1) {
       uint64_t value;
-      read(m_fd, & value, sizeof(value));
+      ssize_t ret = read(m_fd, & value, sizeof(value));
+      if (ret <= 0) continue;
       fds.revents = 0;
     }
     //
