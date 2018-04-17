@@ -1,23 +1,32 @@
 #include "Endpoint.h"
+#include "Percentile.h"
 #include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <exception>
+#include <iostream>
+#include <vector>
 #include <ace/common/Log.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <poll.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <sys/timerfd.h>
 #include <unistd.h>
 #include <sys/socket.h>
 
 namespace mesh {
 
-Endpoint::Endpoint(config::IEndpoint const & cfg)
-  : m_fd(-1)
+Endpoint::Endpoint(config::IEndpoint const & cfg, const int dur, const int sec)
+  : m_duration(dur)
+  , m_sec(sec)
+  , m_fd(-1)
+  , m_timerfd(timerfd_create(CLOCK_MONOTONIC, 0))
   , m_shutdown(false)
   , m_thread()
   , m_clients()
+  , m_expected(cfg.clients())
+  , m_done(false)
 {
   struct sockaddr_in address;
   /*
@@ -52,7 +61,7 @@ Endpoint::Endpoint(config::IEndpoint const & cfg)
    * Create the runner thread.
    */
   m_thread = std::thread(&Endpoint::run, this);
-  ACE_LOG(Info, "Endpoint created, listening on port: ", cfg.port());
+  ACE_LOG(Info, "Endpoint created (", m_sec, "s), listening on port: ", cfg.port());
 }
 
 Endpoint::~Endpoint()
@@ -71,11 +80,12 @@ Endpoint::~Endpoint()
   /*
    * Close the server socket.
    */
+  ::close(m_timerfd);
   ::close(m_fd);
   ACE_LOG(Info, "Endpoint destructed");
 }
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE (1024 * 1024)
 
 void
 Endpoint::run()
@@ -83,35 +93,49 @@ Endpoint::run()
   struct sockaddr_in address;
   int addrlen = sizeof(address);
   uint8_t * buffer = new uint8_t[BUFFER_SIZE];
-  //
-  // Prepare the poll descriptors.
-  //
-  struct pollfd fds[1 + m_clients.size()];
-  memset(fds, 0, sizeof(fds));
-  //
-  // Runner loop.
-  //
-  ACE_LOG(Info, "Endpoint runner started");
+  size_t counter = 0, last = 0, delta = 0;
+  std::vector<size_t> data;
+  auto header = "Bytes/s (" + std::to_string(m_sec) + "s): ";
+  int ticks = m_duration / m_sec;
+  /*
+   * Prepare the timer.
+   */
+  struct timespec ts = { m_sec, 0 };
+  struct itimerspec its = { ts, ts };
+  /*
+   * Arm the timer.
+   */
+  if (m_expected > 0) {
+    timerfd_settime(m_timerfd, 0, &its, &its);
+  }
+  /*
+   * Runner loop.
+   */
+  ACE_LOG(Info, "Endpoint runner started, ticks = ", ticks);
   while (!m_shutdown) {
-    //
-    // Reset the poll descriptors.
-    //
+    /*
+     * Prepare the poll descriptors.
+     */
+    struct pollfd fds[2 + m_clients.size()];
+    memset(fds, 0, sizeof(fds));
     fds[0].fd = m_fd;
     fds[0].events = POLLIN;
+    fds[1].fd = m_timerfd;
+    fds[1].events = POLLIN;
     for (size_t i = 0; i < m_clients.size(); i += 1) {
-      fds[i + 1].fd = m_clients[i];
-      fds[i + 1].events = POLLIN;
+      fds[i + 2].fd = m_clients[i];
+      fds[i + 2].events = POLLIN;
     }
-    //
-    // Wait for a connection.
-    //
-    int res = poll(fds, 1 + m_clients.size(), 100);
+    /*
+     * Wait for a connection.
+     */
+    int res = poll(fds, 2 + m_clients.size(), 100);
     if (res <= 0) {
       continue;
     }
-    //
-    // Process the server socket.
-    //
+    /*
+     * Process the server socket.
+     */
     if (fds[0].revents & POLLIN) {
       ACE_LOG(Info, "Accepting new client connection");
       int fd = accept(m_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
@@ -120,16 +144,42 @@ Endpoint::run()
         m_clients.push_back(fd);
       }
     }
-    //
-    // Process the client sockets.
-    //
+    /*
+     * Process the client sockets.
+     */
     for (size_t i = 0; i < m_clients.size(); i += 1) {
-      if (fds[i + 1].revents & POLLIN) {
-        read(fds[i + 1].fd, buffer, BUFFER_SIZE);
+      if (fds[i + 2].revents & POLLIN) {
+        counter += read(fds[i + 2].fd, buffer, BUFFER_SIZE);
       }
     }
+    /*
+     * Process the timer socker.
+     */
+    if (fds[1].revents & POLLIN) {
+      uint64_t value;
+      read(m_timerfd, &value, sizeof(value));
+      delta = (counter - last) / m_sec;
+      data.push_back(delta);
+      ACE_LOG(Debug, header, delta);
+      last = counter;
+      ticks -= 1;
+    }
+    /*
+     * Terminate if ticks == 0.
+     */
+    if (ticks == 0) {
+      break;
+    }
+  }
+  /*
+   * Display the percentiles and return.
+   */
+  if (m_expected > 0 ) {
+    Percentile<size_t> percentile(data);
+    percentile.print(std::cout, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99);
   }
   ACE_LOG(Info, "Endpoint runner ended");
+  m_done = true;
   delete[] buffer;
 }
 

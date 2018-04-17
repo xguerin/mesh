@@ -1,6 +1,5 @@
 #include <Connection.h>
 #include <Endpoint.h>
-#include <Monitor.h>
 #include <Status.h>
 #include <Mesh.ac.h>
 #include <list>
@@ -27,11 +26,11 @@ signal_handler(int signum)
 int
 main(int argc, char *argv[])
 {
-  size_t bytes = 0;
   /*
    * Define CLI arguments
    */
   TCLAP::CmdLine cmd("Node", ' ', MESH_VERSION);
+  VA<int>         durA("d", "duration", "Collection duration", false, 30, "S", cmd);
   VA<int>         bckA("b", "backoff", "Back-off delay (us)", false, 1000000, "uS", cmd);
   VA<size_t>      pldA("s", "size", "Payload size", false, 128, "SIZE", cmd);
   VA<int>         perA("p", "period", "Monitor period", false, 1, "SECONDS", cmd);
@@ -52,21 +51,15 @@ main(int argc, char *argv[])
   signal(SIGPIPE, SIG_IGN);
   signal(SIGTERM, signal_handler);
   /*
-   * Create a monitor.
-   */
-  mesh::Monitor mon(perA.getValue());
-  /*
    * Create the endpoint.
    */
   ACE_LOG(Info, "Creating the endpoint");
-  mesh::Endpoint ep(*cfg->endpoint());
+  mesh::Endpoint ep(*cfg->endpoint(), durA.getValue(), perA.getValue());
   /*
    * Create the connections.
    */
   std::list<mesh::Connection *> connections;
   if (cfg->has_connections()) {
-    auto varName = "Bytes/" + std::to_string(perA.getValue()) + "s";
-    mon.addVariable(varName, bytes, true);
     ACE_LOG(Info, "Creating the connections");
     for (auto const & c: cfg->connections()) {
       bool keep_trying = true;
@@ -95,15 +88,21 @@ main(int argc, char *argv[])
   /*
    * Wait for the termination signal.
    */
-  uint8_t garbage[pldA.getValue()];
-  while (!terminated) {
-    for (auto & c: connections) {
-      ssize_t res = c->write(pldA.getValue(), garbage);
-      if (res < 0) {
-        ACE_LOG(Error, "At least one connection lost, aborting");
-        return __LINE__;
+  if (connections.empty()) {
+    while (!terminated && !ep.done()) {
+      sleep(1);
+    }
+  }
+  else {
+    uint8_t garbage[pldA.getValue()];
+    while (!terminated && !ep.done()) {
+      for (auto & c: connections) {
+        ssize_t res = c->write(pldA.getValue(), garbage);
+        if (res < 0) {
+          ACE_LOG(Error, "At least one connection lost, aborting");
+          return __LINE__;
+        }
       }
-      bytes += res;
     }
   }
   return 0;
