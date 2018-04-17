@@ -10,32 +10,38 @@ find_path(ACE_INCLUDE_DIR
   NAMES ace/model/Helper.h
   NO_DEFAULT_PATH
   PATHS
-  /usr/include
-  /usr/local/include
-  ${ACE_ROOT}/include
-  $ENV{ACE_ROOT}/include)
+  /usr/local
+  /usr
+  PATH_SUFFIXES include
+  HINTS
+  ${ACE_ROOT}
+  $ENV{ACE_ROOT})
 
 find_library(ACE_LIBRARY
   NAMES ace
   NO_DEFAULT_PATH
   PATHS
-  /usr/local/lib
-  /usr/lib
-  ${ACE_ROOT}/lib
-  $ENV{ACE_ROOT}/lib)
+  /usr/local
+  /usr
+  PATH_SUFFIXES lib
+  HINTS
+  ${ACE_ROOT}
+  $ENV{ACE_ROOT})
 
 find_program(ACE_COMPILER
   NAMES ace-compile
   NO_DEFAULT_PATH
   PATHS
-  /usr/local/bin
-  /usr/bin
-  ${ACE_ROOT}/bin
-  $ENV{ACE_ROOT}/bin)
+  /usr/local
+  /usr
+  PATH_SUFFIXES bin
+  HINTS
+  ${ACE_ROOT}
+  $ENV{ACE_ROOT})
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(ACE DEFAULT_MSG ACE_LIBRARY ACE_INCLUDE_DIR ACE_COMPILER)
 
-if (ACE_FOUND)
-  set (ACE_LIBRARIES ${ACE_LIBRARY})
-  set (ACE_INCLUDE_DIRS ${ACE_INCLUDE_DIR})
-endif ()
+if(ACE_FOUND)
+  set(ACE_LIBRARIES ${ACE_LIBRARY})
+  set(ACE_INCLUDE_DIRS ${ACE_INCLUDE_DIR})
+endif()

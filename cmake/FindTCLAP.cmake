@@ -1,29 +1,15 @@
-# - Find TCLAP 
-# Find the native TCLAP includes and library
-#
-#  TCLAP_INCLUDE_DIRS - where to find re2.h, etc.
-#  TCLAP_LIBRARIES    - List of libraries when using TCLAP.
-#  TCLAP_FOUND        - True if TCLAP found.
+# Find the native TCLAP includes
 
-if (TCLAP_INCLUDE_DIR)
-  set(TCLAP_FOUND TRUE)
-else ()
-  find_path(TCLAP_INCLUDE_DIR NAMES tclap/CmdLine.h PATHS
-    /usr/include
-    /usr/local/include)
-  if (TCLAP_INCLUDE_DIR)
-    set(TCLAP_FOUND TRUE)
-    set(TCLAP_INCLUDE_DIRS ${TCLAP_INCLUDE_DIR})
-  else ()
-    set(TCLAP_FOUND FALSE)
-  endif ()
-endif ()
+find_path(TCLAP_INCLUDE_DIR
+  NAMES tclap/CmdLine.h
+  NO_DEFAULT_PATH
+  PATHS
+  /usr/local
+  /usr
+  PATH_SUFFIXES include
+  HINTS
+  $ENV{TCLAP_ROOT}
+  ${TCLAP_ROOT})
 
-if (TCLAP_FOUND)
-  message(STATUS "Found TCLAP: ${TCLAP_INCLUDE_DIRS}")
-else ()
-  message(STATUS "Not Found TCLAP: ${TCLAP_INCLUDE_DIRS}")
-  message(FATAL_ERROR "Could NOT find TCLAP library")
-endif ()
-
-mark_as_advanced(TCLAP_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLAP DEFAULT_MSG TCLAP_INCLUDE_DIR)
+mark_as_advanced(TCLAP_INCLUDE_DIR)
