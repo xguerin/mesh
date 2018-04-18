@@ -163,7 +163,9 @@ Endpoint::run()
       data.push_back(delta);
       ACE_LOG(Debug, header, delta);
       last = counter;
-      ticks -= 1;
+      if (m_clients.size() == m_expected) {
+        ticks -= 1;
+      }
     }
     /*
      * Terminate if ticks == 0.
